@@ -22,6 +22,19 @@
  * This example demonstrates simple sending of messages over the ROS system.
  */
 
+const dgram = require('dgram');
+const server = dgram.createSocket('udp4');
+
+
+/////////////// SETTINGS    ///////////////
+
+const serverPort = 5000;
+const serverAddress = "127.0.0.1";
+
+/////////////// SETTINGS    ///////////////
+
+
+
 // Require rosnodejs itself
 const rosnodejs = require('rosnodejs');
 // Requires the std_msgs message package
@@ -32,23 +45,40 @@ function talker() {
   rosnodejs.initNode('/talker_node')
     .then((rosNode) => {
       // Create ROS publisher on the 'chatter' topic with String message
-      let pub = rosNode.advertise('/chatter', std_msgs.String);
-      let count = 0;
-      const msg = new std_msgs.String();
-      // Define a function to execute every 100ms
-      setInterval(() => {
-        // Construct the message
-        msg.data = 'hello world ' + count;
-        // Publish over ROS
+      let pub = rosNode.advertise('/chatter', std_msgs.UInt8MultiArray);
+      const msg = new std_msgs.UInt8MultiArray();
+
+      console.log("rosnodejs has inistialized the /talker_node")
+
+      server.on('message', (socketmsg, rinfo) => {
+        // console.log(`server got: ${socketmsg} from ${rinfo.address}:${rinfo.port}`);      
+        msg.data = socketmsg;
         pub.publish(msg);
-        // Log through stdout and /rosout
-        rosnodejs.log.info('I said: [' + msg.data + ']');
-        ++count;
-      }, 100);
+        //rosnodejs.log.info('I said: [' + msg.data + ']');
+      });
     });
 }
 
 if (require.main === module) {
+
+  server.on('error', (err) => {
+    console.log(`server error:\n${err.stack}`);
+    server.close();
+  });
+
+
+
+  server.on('listening', () => {
+    const address = server.address();
+    console.log(`server listening ${address.address}:${address.port}`);
+  });
+
+  server.bind({
+    address: serverAddress,
+    port: serverPort
+  });
+
+
   // Invoke Main Talker Function
   talker();
 }
