@@ -33,6 +33,7 @@ const dgram = require('dgram');
 const client1 = dgram.createSocket('udp4');
 const client2 = dgram.createSocket('udp4');
 
+
 /////////////// SETTINGS    ///////////////
 
 const serverPort1 = 5000;
@@ -45,10 +46,12 @@ const serverAddress = "127.0.0.1";
 const rosnodejs = require('rosnodejs');
 // Requires the std_msgs message package
 const std_msgs = rosnodejs.require('std_msgs').msg;
+const pointMsg =  rosnodejs.require('geometry_msgs').msg;
 const fs = require('fs');
 
 let a = 0
 let b = 0
+
 function listener() {
   // Register node with ROS master
   rosnodejs.initNode('/listener_node')
@@ -71,6 +74,27 @@ function listener() {
         client2.send(data.data, serverPort2, serverAddress);
         b+=1;
         console.log("data received " + b)
+      }
+    );
+    let Position = rosNode.subscribe('/Position', pointMsg.PoseStamped,
+      (data) => { // define callback execution
+        // rosnodejs.log.info('I heard: [' + data.data + ']');
+        
+
+        console.log("Position data received " + JSON.stringify(data.pose.position,null,4))
+      }
+    );
+    let Velocity = rosNode.subscribe('/Velocity', pointMsg.Accel,
+      (data) => { // define callback execution
+        // rosnodejs.log.info('I heard: [' + data.data + ']');
+        console.log("Velocity data received " + JSON.stringify(data.linear,null,4))
+      }
+    );
+    let Accelleration = rosNode.subscribe('/Accelleration', pointMsg.Accel,
+      (data) => { // define callback execution
+        // rosnodejs.log.info('I heard: [' + data.data + ']');
+
+        console.log("Accelleration data received " + JSON.stringify(data.linear,null,4))
       }
     );
     });
